@@ -5,15 +5,19 @@ import aiofiles
 from parsel import Selector
 from rich.progress import Progress
 
-
-CHAPTER_LIST_URL = "https://www.630book.cc/kan/1918762.html"
-BASE_URL = "https://www.630book.cc"
-
-
 async def fetch_chapter_list():
     """抓取章节目录页，返回小说信息和章节列表"""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(CHAPTER_LIST_URL)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+    }
+    
+    async with httpx.AsyncClient(headers=headers, follow_redirects=True, timeout=30.0) as client:
+        resp = await client.get("https://www.630book.cc/shu/533218.html")
         resp.raise_for_status()
         sel = Selector(resp.text)
 
@@ -92,17 +96,20 @@ async def fetch_chapter_content(url: str) -> dict:
         "content": "\n".join(chapter_content)
     }
 
+CHAPTER_LIST_URL = "https://www.630book.cc/shu/533218.html"
+BASE_URL = "https://www.630book.cc"
+
 # 示例用法
 async def main():
 
-#     chapters = await fetch_chapter_list()
-#     novel_info = await fetch_chapter_list()
-#     chapters = novel_info['all_chapters']
-#     print(f"共发现 {len(chapters)} 章，开始下载...")
-    url = "https://www.630book.cc/kan/1918762_5857837_0.html"
-    chapter = await fetch_chapter_content(url)
-    print("标题:", chapter["title"])
-    print("内容:", chapter["content"][:500], "...")  # 只打印前500字符
+    # chapters = await fetch_chapter_list()
+    novel_info = await fetch_chapter_list()
+    chapters = novel_info['all_chapters']
+    print(f"共发现 {len(chapters)} 章，开始下载...")
+    # url = "https://www.630book.cc/kan/1918762_5857837_1.html"
+    # chapter = await fetch_chapter_content(url)
+    # print("标题:", chapter["title"])
+    # print("内容:", chapter["content"][:500], "...")  # 只打印前500字符
 
 if __name__ == "__main__":
     asyncio.run(main())

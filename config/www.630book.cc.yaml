@@ -1,0 +1,66 @@
+# ===============================
+# 站点基本信息
+# ===============================
+name: "630book"                   # 站点名称，用于区分不同网站
+base_url: "https://www.630book.cc" # 网站基础地址，用于拼接相对链接
+encoding: "utf-8"                 # 网页编码（部分老站可能是 gbk/gb2312）
+user_agent: "Mozilla/5.0 ..."     # 自定义 UA，部分网站会屏蔽默认请求头
+delay: 1.5                        # 每次请求的延时（秒），防止请求过快被封禁
+
+# 请求头相关（全部可选）
+headers:
+  User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+  Accept-Language: "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
+  Accept-Encoding: "gzip, deflate, br"
+  Connection: "keep-alive"
+  Upgrade-Insecure-Requests: "1"
+  Cookie: "Hm_lvt_405a34174b7d925aa7013663c57c4aae=1758893400; HMACCOUNT=EB80B6F26A96DCBC; _ok1_=GjmiBPnlcrwISmNsprw+ybYR3XaN2lvmPdoOJjgHTcMaGRNyWLctCShcEggwdyjyvjbe+qcmoosX0974vpJRJyuZRSS2MAILuoEzrnJQ39nqlswfPbylGOZbg7KlK+28; Hm_lpvt_405a34174b7d925aa7013663c57c4aae=1759594983" 
+
+# ===============================
+# 小说元信息（书籍详情页的提取规则）
+# ===============================
+novel:
+  title: "//div[@class='info']/div[@class='top']/h1/text()"               # 小说标题
+  author: "//div[@class='info']/div[@class='top']//p[contains(text(),'作')]/text()" # 作者信息（需配合 author_split）
+  update_time: "//div[@class='info']/div[@class='top']/p[contains(text(),'最后更新')]/text()" # 最近更新时间
+  intro: "//div[@class='info']/div[@class='desc']/text()"                 # 小说简介
+  author_split: "："                 # 作者字段的分隔符（如“作者：张三”）
+  update_split: "："                 # 更新时间字段的分隔符
+  cover: "//div[@class='info']//img/@src"     # 小说封面图
+  category: "//div[@class='info']//p[contains(text(),'分类')]/text()"     # 小说类别
+  status: "//div[@class='info']//p[contains(text(),'状态')]/text()"       # 连载状态（连载中/已完结等）
+
+# ===============================
+# 章节目录（章节列表页的提取规则）
+# ===============================
+chapters:
+  container: "//h2[contains(@class,'layout-tit')][2]/following-sibling::ul[1]"  # 章节目录的容器
+  item: "li/a"                     # 每个章节的节点选择器
+  title: "text()"                  # 章节标题
+  url: "@href"                     # 章节链接
+  more_url: "//a[contains(@class,'btn-mulu')]/@href"  # 目录分页链接（有的站点需要点“更多章节”）
+  pagination: true                 # 是否支持章节列表分页（true/false）
+
+# ===============================
+# 章节正文（章节详情页的提取规则）
+# ===============================
+content:
+  container: "//div[@class='word_read']"      # 章节正文容器
+  title: "h3/text()"                          # 章节标题
+  text: "p/text()"                            # 章节正文段落
+  next_page: "//div[@class='read_btn']/a[contains(@href,'_1.html')]/@href"  # 下一页（分页章节）
+  pagination: true                            # 是否支持正文分页（true/false）
+
+# ===============================
+# 内容过滤规则（清理无用内容/广告）
+# ===============================
+filters:
+  remove_html:
+    - "//div[@class='ads']"       # 删除广告节点
+    - "//script"                  # 删除 JS 脚本
+  regex:
+    - "请勿开启浏览器"            # 删除匹配的无关提示
+    - "手机用户请到"              # 删除匹配的推广信息
+    - "请大家收藏：（）"              # 删除匹配的推广信息
+    - "相邻推荐"              # 删除匹配的推广信息
