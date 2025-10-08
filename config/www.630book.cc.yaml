@@ -15,7 +15,7 @@ headers:
   Accept-Encoding: "gzip, deflate, br"
   Connection: "keep-alive"
   Upgrade-Insecure-Requests: "1"
-  Cookie: "Hm_lvt_405a34174b7d925aa7013663c57c4aae=1758893400; HMACCOUNT=EB80B6F26A96DCBC; _ok1_=GjmiBPnlcrwISmNsprw+ybYR3XaN2lvmPdoOJjgHTcMaGRNyWLctCShcEggwdyjyvjbe+qcmoosX0974vpJRJyuZRSS2MAILuoEzrnJQ39nqlswfPbylGOZbg7KlK+28; Hm_lpvt_405a34174b7d925aa7013663c57c4aae=1759594983" 
+  Cookie: "guardret=PqA=; Hm_lvt_405a34174b7d925aa7013663c57c4aae=1758893400; HMACCOUNT=EB80B6F26A96DCBC; _ok1_=RDkdqiOtEf1Q33VyNWbKVF9NTmU1wX+wlmBUPvBJ5EGgFJ+X0B08QrSXRkZfkJdaQhW+vxOsM9mIiXB2IJ9jHiitM0C7vdbKrm4iazid0+VVK0rIq+J3TYuGXnxtEbxL; Hm_lpvt_405a34174b7d925aa7013663c57c4aae=1759929290" 
 
 # ===============================
 # 小说元信息（书籍详情页的提取规则）

@@ -6,7 +6,7 @@ from parsel import Selector
 from rich.progress import Progress
 
 # 加载配置
-def load_config(config_path="./config/www.630book.cc.yaml"):
+def load_config(config_path="./config/www.fa4d83bf.cfd.yaml"):
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
@@ -23,6 +23,7 @@ async def fetch_chapter_list(url: str):
         resp = await client.get(url)
         resp.raise_for_status()
         sel = Selector(resp.text)
+        print(sel)
 
         # 使用配置中的规则提取小说信息
         novel_cfg = config['novel']
@@ -55,9 +56,9 @@ async def fetch_chapter_list(url: str):
                 })
 
         # 查看更多章节链接
-        more_chapters = sel.xpath(chapters_cfg.get('more_url', '')).get()
-        if more_chapters:
-            more_chapters = config['base_url'] + more_chapters
+        # more_chapters = sel.xpath(chapters_cfg.get('more_url', '')).get()
+        # if more_chapters:
+        #     more_chapters = config['base_url'] + more_chapters
 
         novel_info = {
             "title": title,
@@ -65,7 +66,7 @@ async def fetch_chapter_list(url: str):
             "intro": intro,
             "update_time": update_time,
             "all_chapters": all_chapters,
-            "more_chapters_url": more_chapters
+            # "more_chapters_url": more_chapters
         }
 
         return novel_info
@@ -112,7 +113,8 @@ async def fetch_chapter_content(url: str) -> dict:
 
 # 示例用法
 async def main():
-    chapter_url = 'https://www.630book.cc/shu/533218.html'
+    
+    chapter_url = 'https://www.fa4d83bf.cfd/book/64959/'
     novel_info = await fetch_chapter_list(chapter_url)
     print(f"小说: {novel_info['title']}, 作者: {novel_info['author']}")
     print(novel_info)
@@ -121,9 +123,9 @@ async def main():
     #     chapter = await fetch_chapter_content(novel_info['all_chapters'][0]['url'])
     #     print(f"章节: {chapter['title']}")
     #     print(f"内容预览: {chapter['content'][:200]}...")
-    chapter = await fetch_chapter_content('https://www.630book.cc/shu/533218/180813574.html')
-    print(f"章节: {chapter['title']}")
-    print(f"内容预览: {chapter['content'][:200]}...")
+    # chapter = await fetch_chapter_content('https://www.630book.cc/shu/533218/180813574.html')
+    # print(f"章节: {chapter['title']}")
+    # print(f"内容预览: {chapter['content'][:200]}...")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,0 +1,69 @@
+# ===============================
+# 站点基本信息
+# ===============================
+name: "fa4d83bf"
+base_url: "https://www.fa4d83bf.cfd"
+encoding: "utf-8"
+user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+delay: 1.5
+
+# 请求头相关（可根据需要调整）
+headers:
+  User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+  Accept-Language: "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
+  Accept-Encoding: "gzip, deflate, br"
+  Connection: "keep-alive"
+  Upgrade-Insecure-Requests: "1"
+  Cookie: "Hm_lvt_9c5f07b6ce20e3782eac91ed47d1421c=1759930006; HMACCOUNT=EB80B6F26A96DCBC; hm=65d0a3d46fb3b0c1077a17b16cddddfe; Hm_lpvt_9c5f07b6ce20e3782eac91ed47d1421c=1759933608"
+
+# ===============================
+# 小说元信息（书籍详情页）
+# ===============================
+novel:
+  title: "//div[@class='info']/h1/text()"                       # 小说标题
+  author: "//div[@class='info']//span[contains(text(),'作者')]/text()"
+  update_time: "//div[@class='info']//span[contains(text(),'更新')]/text()"
+  status: "//div[@class='info']//span[contains(text(),'状态')]/text()"
+  intro: "//div[@class='intro']//dd/text()"
+  cover: "//div[@class='cover']/img/@src"
+  category: "//div[@class='path']/a[last()-1]/text()"
+  author_split: "："    # 拆分字段
+  update_split: "："
+
+# ===============================
+# 章节目录（章节列表页）
+# ===============================
+chapters:
+  container: "//div[@class='listmain']/dl"
+  item: "dd/a"
+  title: "text()"
+  url: "@href"
+  pagination: false     # 暂无分页，展开章节用JS动态加载（后续可扩展）
+
+# ===============================
+# 章节正文（章节详情页）
+# ===============================
+content:
+  container: "//div[@id='chaptercontent']"
+  title: "//div[@class='bookname']/h1/text() | //h1/text()"
+  text: ".//text()"
+  next_page: "//a[contains(text(),'下一页')]/@href"
+  pagination: true      # 章节正文部分可能分页
+
+# ===============================
+# 内容过滤规则（去广告 / 无关提示）
+# ===============================
+filters:
+  remove_html:
+    - "//script"
+    - "//div[contains(@class,'ads')]"
+    - "//div[@class='bottomlink']"
+    - "//div[@class='footer']"
+  regex:
+    - "请收藏本站"
+    - "推荐地址"
+    - "笔趣阁"
+    - "最新章节"
+    - "无弹窗"
+    - "本站所有小说"
