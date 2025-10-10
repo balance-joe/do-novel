@@ -1,48 +1,43 @@
 # main.py
 import asyncio
-import httpx
 import yaml
 from parsel import Selector
-from rich.progress import Progress
+from service.crawl_url_service import CrawlUrlService  # ✅ 引入你的封装
 
-# 加载配置
-def load_config(config_path="./config/www.fa4d83bf.cfd.yaml"):
+# 读取配置
+def load_config(config_path="./config/www.1bda200708.cfd.yaml"):
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 config = load_config()
 
+# -------------------------------
+# 抓取章节目录页
+# -------------------------------
 async def fetch_chapter_list(url: str):
-    """
-    抓取章节目录页，返回小说信息和章节列表
-    完全使用配置驱动，兼容 headers/cookies
-    """
+    async with CrawlUrlService() as crawl:  # ✅ 统一session
+        result = await crawl.async_fetch_single(url)
+        html = result["html"] if result and "html" in result else ""
 
-    headers = config.get("headers", {})
-    async with httpx.AsyncClient(headers=headers, follow_redirects=True, timeout=30.0) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        sel = Selector(resp.text)
-        print(sel)
+        if not html:
+            print(f"获取失败: {url}")
+            return {}
 
-        # 使用配置中的规则提取小说信息
+        sel = Selector(html)
+
         novel_cfg = config['novel']
         title = sel.xpath(novel_cfg['title']).get(default="").strip()
-        
-        # 作者提取（使用配置中的分隔符）
+
         author_raw = sel.xpath(novel_cfg['author']).get(default="")
         author_split = novel_cfg.get('author_split', '：')
         author = author_raw.split(author_split)[-1].strip() if author_raw else ""
-        
-        # 更新时间提取
+
         update_raw = sel.xpath(novel_cfg['update_time']).get(default="")
         update_split = novel_cfg.get('update_split', '：')
         update_time = update_raw.split(update_split)[-1].strip() if update_raw else ""
-        
-        # 简介提取
+
         intro = sel.xpath(novel_cfg['intro']).get(default="").strip()
 
-        # 使用配置中的规则提取章节列表
         chapters_cfg = config['chapters']
         all_chapters = []
         container = sel.xpath(chapters_cfg['container'])
@@ -55,43 +50,41 @@ async def fetch_chapter_list(url: str):
                     "url": config['base_url'] + href
                 })
 
-        # 查看更多章节链接
-        # more_chapters = sel.xpath(chapters_cfg.get('more_url', '')).get()
-        # if more_chapters:
-        #     more_chapters = config['base_url'] + more_chapters
-
         novel_info = {
             "title": title,
             "author": author,
             "intro": intro,
             "update_time": update_time,
             "all_chapters": all_chapters,
-            # "more_chapters_url": more_chapters
         }
 
         return novel_info
 
-async def fetch_chapter_content(url: str) -> dict:
-    """
-    抓取单章节（可能多页）内容。
-    """
+# -------------------------------
+# 抓取章节内容页（支持分页）
+# -------------------------------
+async def fetch_chapter_content(url: str):
     content_cfg = config['content']
     filters = config.get('filters', {})
-    chapter_content = []
-    
-    headers = config.get("headers", {})
-    async with httpx.AsyncClient(headers=headers, follow_redirects=True, timeout=30.0) as client:
-        while url:
-            resp = await client.get(url)
-            resp.raise_for_status()
-            sel = Selector(resp.text)
 
-            # 章节标题（只取第一页）
-            if not chapter_content:
+    async with CrawlUrlService() as crawl:  # ✅ 同样复用
+        chapter_content = []
+        title = ""
+
+        while url:
+            result = await crawl.async_fetch_single(url)
+            
+            html = result["html"] if result and "html" in result else ""
+            
+            if not html:
+                break
+            
+            sel = Selector(html)
+
+            if not title:
                 title_sel = sel.xpath(content_cfg['container'])
                 title = title_sel.xpath(content_cfg['title']).get(default="").strip()
 
-            # 正文段落
             content_sel = sel.xpath(content_cfg['container'])
             paragraphs = content_sel.xpath(content_cfg['text']).getall()
             for p in paragraphs:
@@ -99,33 +92,34 @@ async def fetch_chapter_content(url: str) -> dict:
                 if p and not any(f in p for f in filters.get('regex', [])):
                     chapter_content.append(p)
 
-            # 查找下一页链接（分页章节）
             next_page = sel.xpath(content_cfg.get('next_page', '')).get()
-            if next_page:
-                url = config['base_url'] + next_page
-            else:
-                url = None
+            url = config['base_url'] + next_page if next_page else None
 
-    return {
-        "title": title,
-        "content": "\n".join(chapter_content)
-    }
+        return {
+            "title": title,
+            "content": "\n".join(chapter_content)
+        }
 
-# 示例用法
+# -------------------------------
+# 主程序入口
+# -------------------------------
 async def main():
+    # chapter_url = 'https://www.1bda200708.cfd/book/31383/'
+    # novel_info = await fetch_chapter_list(chapter_url)
+    # print(f"小说: {novel_info['title']}, 作者: {novel_info['author']}")
+    # print(f"共 {len(novel_info['all_chapters'])} 章")
+    # print(novel_info)
+
+    chapter_url = 'https://www.1bda200708.cfd/book/31383/788.html'
+    content = await fetch_chapter_content(chapter_url)
+    print(content)
     
-    chapter_url = 'https://www.fa4d83bf.cfd/book/64959/'
-    novel_info = await fetch_chapter_list(chapter_url)
-    print(f"小说: {novel_info['title']}, 作者: {novel_info['author']}")
-    print(novel_info)
-    # # 下载第一章作为测试
+    # # 可选：抓取第一章内容测试
     # if novel_info['all_chapters']:
-    #     chapter = await fetch_chapter_content(novel_info['all_chapters'][0]['url'])
+    #     first = novel_info['all_chapters'][0]
+    #     chapter = await fetch_chapter_content(first['url'])
     #     print(f"章节: {chapter['title']}")
-    #     print(f"内容预览: {chapter['content'][:200]}...")
-    # chapter = await fetch_chapter_content('https://www.630book.cc/shu/533218/180813574.html')
-    # print(f"章节: {chapter['title']}")
-    # print(f"内容预览: {chapter['content'][:200]}...")
+    #     print(f"内容预览:\n{chapter['content'][:200]}...")
 
 if __name__ == "__main__":
     asyncio.run(main())

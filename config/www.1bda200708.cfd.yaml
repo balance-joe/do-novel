@@ -1,8 +1,8 @@
 # ===============================
 # 站点基本信息
 # ===============================
-name: "fa4d83bf"
-base_url: "https://www.fa4d83bf.cfd"
+name: "1bda200708"
+base_url: "www.1bda200708.cfd"
 encoding: "utf-8"
 user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 delay: 1.5
@@ -36,11 +36,11 @@ novel:
 # ===============================
 chapters:
   container: "//div[@class='listmain']/dl"
-  item: "dd/a"
+  item: "dd/a | span[@class='dd_hide']/dd/a"  # 同时获取常规和隐藏章节
   title: "text()"
   url: "@href"
-  pagination: false     # 暂无分页，展开章节用JS动态加载（后续可扩展）
-
+  pagination: false
+  
 # ===============================
 # 章节正文（章节详情页）
 # ===============================
