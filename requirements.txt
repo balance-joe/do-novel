@@ -4,5 +4,6 @@ lxml==6.0.2
 tqdm==4.67.1
 aiofiles==24.1.0
 rich==14.1.0
-scrapy==2.13.3
-pyyaml==6.0.3
+Scrapy==2.13.3
+PyYAML==6.0.3
+requests==2.32.5
