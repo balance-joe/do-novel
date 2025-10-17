@@ -1,0 +1,81 @@
+# ===============================
+# 站点基本信息
+# ===============================
+name: "bqg116"
+base_url: "https://www.bqg116.com"
+encoding: "utf-8"
+user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+delay: 1.5
+
+# 请求头相关
+headers:
+  User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+  Accept-Language: "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
+  Accept-Encoding: "gzip, deflate, br"
+  Connection: "keep-alive"
+  Upgrade-Insecure-Requests: "1"
+
+# ===============================
+# 小说元信息（书籍详情页）
+# ===============================
+novel:
+  title: "//h1[@class='novel_title']/text()"
+  author: "//div[@class='info']//p[contains(text(),'作者')]/text()"
+  update_time: "//div[@class='info']//p[contains(text(),'最后更新')]/text()"
+  status: "//div[@class='info']//p[contains(text(),'状态')]/text()"
+  intro: "//div[@class='desc m-desc']/text()"
+  cover: "//div[@class='imgbox']/img/@src"
+  category: "//h2[@class='layout-tit']/a[last()]/text()"
+  author_split: "："
+  update_split: "："
+
+# ===============================
+# 章节目录（章节列表页）
+# ===============================
+chapters:
+  container: "//div[contains(@class,'section-box') or contains(@class,'chapter-list') or contains(@id,'section')]"
+  item: ".//li//a | .//dd//a | .//p//a"
+  title: "normalize-space(string(.))"  
+  url: "@href"
+  pagination: true
+
+# ===============================
+# 章节正文（章节详情页）
+# ===============================
+content:
+  container: "//div[@class='content' and @id='content']"
+  title: "//h1[@class='title']/text()"
+  text: |
+    .//p/text() | 
+    .//text()[not(ancestor::div[@class='section-opt']) and 
+              not(ancestor::div[@class='hotcmd-box']) and
+              not(ancestor::a) and
+              not(contains(.,'本章未完'))]
+  next_page: "//a[contains(@href,'_2.html') or contains(@rel,'next')]/@href | //a[@id='next_url']/@href"
+  pagination: true
+
+# ===============================
+# 内容过滤规则（去广告 / 无关提示）
+# ===============================
+filters:
+  remove_html:
+    - "//script"
+    - "//div[contains(@class,'ads')]"
+    - "//div[contains(@class,'topbar')]"
+    - "//div[contains(@class,'hotcmd')]"
+    - "//div[contains(@class,'pinglun')]"
+    - "//div[@class='index-container']"
+    - "//div[@class='footer']"
+    - "//ul[@class='intro_tj']"
+  regex:
+    - "请收藏本站"
+    - "推荐地址"
+    - "笔趣阁"
+    - "最新章节"
+    - "无弹窗"
+    - "本站所有小说"
+    - "热门小说推荐"
+    - "精选评论"
+    - "相关推荐："
+    - "《.*?》"

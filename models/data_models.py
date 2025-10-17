@@ -1,6 +1,5 @@
 # ===========================================
 # File: models/data_models.py
-# Author: linjoe & GPT-5
 # Description:
 #   小说网站抓取配置的结构化数据模型定义。
 #   所有智能体（Template / Generator / Validator / Improver / Orchestrator）
@@ -64,6 +63,7 @@ class ChapterListConfig(BaseModel):
     title: str                                 # 章节标题 XPath
     url: str                                   # 章节链接 XPath
     pagination: bool = False                   # 是否存在分页目录
+    more_url: Optional[str] = None             # 目录分页链接或“更多章节”按钮的 XPath
 
 
 # ===========================================

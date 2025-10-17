@@ -1,5 +1,6 @@
 # service/novel_service.py
 import asyncio
+from urllib.parse import urljoin
 from parsel import Selector
 from service.config_service import ConfigService
 from service.crawl_service import CrawlService
@@ -33,18 +34,46 @@ class NovelService:
             update_split = novel_cfg.get("update_split", "：")
             update_time = update_raw.split(update_split)[-1].strip()
 
+            # 获取章节列表
             chapters_cfg = self.config["chapters"]
             all_chapters = []
-            container = sel.xpath(chapters_cfg["container"])
-            for a in container.xpath(chapters_cfg["item"]):
-                chap_title = a.xpath(chapters_cfg["title"]).get(default="").strip()
-                href = a.xpath(chapters_cfg["url"]).get(default="").strip()
-                if href:
+            containers = sel.xpath(chapters_cfg["container"])
+            if not containers:
+                # fallback 自动容错
+                containers = sel.xpath("//div[contains(@class, 'chapter') or contains(@id, 'chapter') or contains(@class, 'section')]")
+            
+            for container in containers:
+                items = container.xpath(chapters_cfg["item"])
+                for a in items:
+                    title_parts = a.xpath(chapters_cfg["title"]).getall()
+                    chap_title = "".join(title_parts).strip()
+                    if not chap_title:
+                        continue
+
+                    href = a.xpath(chapters_cfg["url"]).get(default="").strip()
+                    if not href:
+                        continue
+
+                    # ✅ 使用 urljoin，防止路径拼接错误
+                    full_url = urljoin(self.base_url, href)
+
                     all_chapters.append({
                         "title": chap_title,
-                        "url": self.base_url + href
+                        "url": full_url
                     })
+        
 
+            # 去重（防止分页重复）
+            unique_chapters = []
+            seen_urls = set()
+            for ch in all_chapters:
+                if ch["url"] not in seen_urls:
+                    unique_chapters.append(ch)
+                    seen_urls.add(ch["url"])
+            all_chapters = unique_chapters
+            
+            #获取章节结束
+            
             return {
                 "title": title,
                 "author": author,
@@ -61,6 +90,7 @@ class NovelService:
             filters = self.config.get("filters", {})
             chapter_content = []
             title = ""
+            base_chapter_id = url.split("/")[-1].split(".")[0]  # 当前章节编码
 
             while url:
                 result = await crawl.async_fetch_single(url)
@@ -69,10 +99,13 @@ class NovelService:
                     break
 
                 sel = Selector(html)
+
+                # 提取标题，只做一次
                 if not title:
                     title_sel = sel.xpath(content_cfg["container"])
                     title = title_sel.xpath(content_cfg["title"]).get(default="").strip()
 
+                # 提取正文
                 content_sel = sel.xpath(content_cfg["container"])
                 paragraphs = content_sel.xpath(content_cfg["text"]).getall()
                 for p in paragraphs:
@@ -80,8 +113,14 @@ class NovelService:
                     if p and not any(f in p for f in filters.get("regex", [])):
                         chapter_content.append(p)
 
+                # 获取下一页
                 next_page = sel.xpath(content_cfg.get("next_page", "")).get()
-                url = self.base_url + next_page if next_page else None
+                if next_page and base_chapter_id in next_page:
+                    url = urljoin(self.base_url, next_page)
+                else:
+                    url = None  # 本章分页结束
+
+                print(f"当前章节抓取: {url}，下一页: {next_page}")
 
             return {
                 "title": title,

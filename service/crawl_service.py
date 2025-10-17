@@ -74,7 +74,7 @@ class CrawlService:
             return ""
 
         # 清除噪音元素
-        for tag in ["script", "style", "link", "meta", "noscript"]:
+        for tag in ["script", "style", "link", "meta", "noscript","input"]:
             for e in body.xpath(f".//{tag}"):
                 if e.getparent() is not None:
                     e.getparent().remove(e)
