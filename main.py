@@ -1,6 +1,11 @@
 # main.py
 import asyncio
+import sys
 from service.novel_service import NovelService
+
+# ✅ Windows 下切换事件循环策略，解决 ProactorEventLoop 异常
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 async def main():
     # 测试章节列表
@@ -21,3 +26,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
+    
