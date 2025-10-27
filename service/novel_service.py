@@ -147,7 +147,7 @@ class NovelService:
                 data = await self.fetch_chapter_content(chap["url"])
                 title = data.get("title") or chap["title"]
                 content = data.get("content", "").replace("\\n", "\n").replace("\r", "").strip()
-                merged_text.append(f"\n\n第{idx}章 {title}\n\n{content}\n")
+                merged_text.append(f"\n{title}\n\n{content}\n")
                 print(f"✅ 成功下载章节：{title}")
             except Exception as e:
                 print(f"❌ 抓取章节失败: {chap['title']} - {e}")
