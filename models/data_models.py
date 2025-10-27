@@ -100,36 +100,3 @@ class XPathTemplate(BaseModel):
     chapters: ChapterListConfig                # 章节列表配置
     content: ContentPageConfig                 # 章节正文配置
     filters: FilterConfig                      # 内容过滤规则
-
-
-# ===========================================
-# 7️⃣ 验证与反馈结果结构
-# ===========================================
-
-class RuleValidationReport(BaseModel):
-    """XPath 规则验证报告"""
-    is_valid: bool                             # 是否验证通过
-    invalid_fields: List[str] = []             # 验证失败的字段列表
-    content_preview: Dict[str, str] = {}       # 抓取的预览内容（片段）
-    suggestions: Optional[str] = None          # 针对失败项的改进建议
-
-
-class TemplateAnalysis(BaseModel):
-    """模板结构分析结果（由 TemplateAgent 输出）"""
-    required_fields: List[str] = []            # 必填字段
-    optional_fields: List[str] = []            # 可选字段
-    field_descriptions: Dict[str, str] = {}    # 字段描述（从模板或文档提取）
-
-
-class ImprovedConfig(BaseModel):
-    """规则修正结果（由 ImproverAgent 输出）"""
-    updated_config: XPathTemplate              # 修正后的配置对象
-    changes: Dict[str, str]                    # 修改说明（字段名 -> 变更理由）
-
-
-class FinalValidationResult(BaseModel):
-    """完整闭环后的最终验证结果"""
-    site_name: str                             # 站点名称
-    success: bool                              # 最终是否成功
-    final_config: XPathTemplate                # 最终可用的 XPath 配置
-    report: RuleValidationReport               # 最后一次验证报告

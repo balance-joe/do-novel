@@ -6,13 +6,16 @@ from service.config_service import ConfigService
 from service.crawl_service import CrawlService
 import os
 import aiofiles
+from lxml import html
+from lxml.etree import XPathError, ParserError
+
 
 class NovelService:
-    def __init__(self, url: str):
-        if(url) :
-            self.url = url
-            self.config = ConfigService().load_config(url)
-            self.base_url = self.config.get("base_url", "")
+    # def __init__(self, url: str):
+        # if(url) :
+        #     self.url = url
+        #     self.config = ConfigService().load_config(url)
+        #     self.base_url = self.config.get("base_url", "")
         
     async def fetch_chapter_list(self, url: str):
         """抓取章节列表页"""
@@ -159,3 +162,51 @@ class NovelService:
 
         print(f"✅ 小说《{novel_name}》下载完成：{file_path}")
         return file_path
+    
+    
+    def extract_by_xpath(self, xpath_rule: str, html_content: str):
+        """
+        从 HTML 中提取符合 XPath 规则的内容
+        
+        参数:
+            xpath_rule: XPath 提取规则（字符串）
+            html_content: 待解析的 HTML 字符串
+        
+        返回:
+            list: 提取到的内容列表（元素可能是文本、属性值或节点对象，根据 XPath 规则而定）
+                若解析失败或无结果，返回空列表
+        """
+        if not isinstance(xpath_rule, str) or not xpath_rule.strip():
+            print("错误：XPath 规则不能为空字符串")
+            return []
+        
+        if not isinstance(html_content, str) or not html_content.strip():
+            print("错误：HTML 内容不能为空字符串")
+            return []
+        
+        try:
+            # 解析 HTML 内容为可 XPath 查询的对象
+            tree = html.fromstring(html_content)
+        except ParserError as e:
+            print(f"HTML 解析失败：{str(e)}")
+            return []
+        
+        try:
+            # 执行 XPath 查询
+            results = tree.xpath(xpath_rule)
+            # 对结果进行简单格式化（可选，根据需求调整）
+            formatted_results = []
+            for item in results:
+                # 若结果是元素节点，提取其文本（可根据需求修改，比如保留节点对象）
+                if hasattr(item, 'text'):
+                    formatted_results.append(item.text.strip() if item.text else '')
+                else:
+                    # 非元素节点（如属性值、文本节点等）直接保留
+                    formatted_results.append(str(item).strip())
+            return formatted_results
+        except XPathError as e:
+            print(f"XPath 语法错误：{str(e)}")
+            return []
+        except Exception as e:
+            print(f"提取过程出错：{str(e)}")
+            return []
