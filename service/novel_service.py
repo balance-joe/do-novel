@@ -11,17 +11,20 @@ from lxml.etree import XPathError, ParserError
 
 
 class NovelService:
-    # def __init__(self, url: str):
-        # if(url) :
-        #     self.url = url
-        #     self.config = ConfigService().load_config(url)
-        #     self.base_url = self.config.get("base_url", "")
+    def __init__(self, url: str):
+        if(url) :
+            self.url = url
+            self.config = ConfigService().load_config(url)
+            self.base_url = self.config.get("base_url", "")
         
     async def fetch_chapter_list(self, url: str):
         """抓取章节列表页"""
         async with CrawlService() as crawl:
-            result = await crawl.async_fetch_single(url)
-            html = result.get("html", "") if result else ""
+            # result = await crawl.async_fetch_single(url)
+            # html = result.get("html", "") if result else ""
+            chpter_path = './doc/chapter.html'
+            with open(chpter_path, 'r', encoding='utf-8') as file:
+                html = file.read()    
             if not html:
                 return {}
 
@@ -29,6 +32,8 @@ class NovelService:
             novel_cfg = self.config["novel"]
 
             title = sel.xpath(novel_cfg["title"]).get(default="").strip()
+            print(novel_cfg["title"])
+            
             author_raw = sel.xpath(novel_cfg["author"]).get(default="")
             author_split = novel_cfg.get("author_split", "：")
             author = author_raw.split(author_split)[-1].strip() if author_raw else ""

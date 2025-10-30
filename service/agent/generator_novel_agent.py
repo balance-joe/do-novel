@@ -35,8 +35,6 @@ class XPathGeneratorNovelAgent:
         # 构建分析提示
         prompt = self._build_prompt(html)
         
-        print("🔍 开始分析HTML结构并生成XPath模板...")
-        
         # 使用Agent分析HTML并生成XPath模板
         result = self.agent.run_sync(prompt)
         
@@ -46,54 +44,79 @@ class XPathGeneratorNovelAgent:
 
     def _get_system_prompt(self) -> str:
         """
-        获取系统提示词 —— 专为 pydantic_ai 结构化输出设计
+        优化后的系统提示词 - 更专注于网页结构分析和XPath生成
         """
         return (
-            "你是一名专业的网页结构与 XPath 提取专家。"
-            "请分析用户提供的小说详情页 HTML 结构，为以下字段生成精确、稳定的 XPath 表达式。"
-            "输出将自动映射到 NovelInfoConfig 模型，因此你只需专注生成 XPath 值本身，而非 JSON。"
-            "\n\n"
-            "字段含义说明：\n"
-            "1. title：小说标题所在节点（如 <h1>、<meta property='og:title'> 等）\n"
-            "2. author：作者信息所在节点（通常含有“作者”或类名 'author'）\n"
-            "3. update_time：更新时间所在节点（可含“更新”、“最后”或日期格式）\n"
-            "4. status：小说连载状态（如 连载中 / 完结）对应节点\n"
-            "5. intro：小说简介或概要的文本容器节点（通常是 <div class='intro'>）\n"
-            "6. cover：封面图像的 XPath，应指向图片 URL 属性（@src、@data-src 或 meta 标签）\n"
-            "7. category：小说所属分类节点（如“玄幻”“都市”等文字）\n"
-            "8. author_split：若作者字段存在分隔符（例如“作者：张三”），请返回该分隔符，否则返回 null。\n"
-            "9. update_split：若更新时间存在分隔符（例如“更新时间：2024-01-01”），请返回该分隔符，否则返回 null。\n\n"
-            "输出要求：\n"
-            "- 每个字段的值必须是可直接用于 lxml 的 XPath 表达式字符串。\n"
-            "- 优先使用稳定的属性选择（如 contains(@class, 'author')），避免数字索引（如 div[7]）。\n"
-            "- 文本节点建议使用 normalize-space() 包裹，以去除多余空白。\n"
-            "- 若页面无此字段信息，请输出 None。\n"
-            "- cover 优先选择图片 URL 属性，如 //img/@src 或 meta[@property='og:image']/@content。\n"
-            "\n"
-            "请直接返回各字段对应的 XPath 值，系统会自动封装为 NovelInfoConfig 实例。"
+            "你是一名专业的网页结构分析专家，专门为小说网站生成XPath提取规则。\n\n"
+            
+            "## 核心任务\n"
+            "分析用户提供的HTML内容，为小说详情页的各个字段生成精确、稳定、通用的XPath表达式。\n\n"
+            
+            "## 字段分析要点\n"
+            "1. **title**: 查找<h1>-<h3>标签，优先选择包含小说名称的标签\n"
+            "2. **author**: 查找包含'作者'文本的节点，或class包含'author'的节点\n" 
+            "3. **update_time**: 查找包含'更新''最后''时间'等关键词的日期信息\n"
+            "4. **status**: 查找包含'状态''连载''完结'等状态信息的节点\n"
+            "5. **intro**: 查找简介描述文本，通常在多行<p>标签或特定class的div中\n"
+            "6. **cover**: 优先查找og:image元标签，其次查找封面图片的img标签\n"
+            "7. **category**: 查找分类信息，通常在面包屑导航或特定分类区域\n\n"
+            
+            "## XPath生成原则\n"
+            "- **稳定性优先**: 使用class、id等稳定属性，避免使用易变的数字索引\n"
+            "- **容错性强**: 使用contains()进行模糊匹配，使用normalize-space()处理空白\n"
+            "- **备用方案**: 为关键字段提供备选XPath（使用|操作符）\n"
+            "- **精确提取**: 文本节点使用text()，属性使用@attr，根据需求选择\n\n"
+            
+            "## 输出要求\n"
+            "直接返回有效的XPath表达式字符串，确保：\n"
+            "- 可被lxml库直接使用\n"
+            "- 能够准确匹配目标内容\n"
+            "- 具备一定的通用性和容错性\n"
+            "- 若无对应内容则返回None\n\n"
+            
+            "请基于HTML的实际结构生成最合理的XPath规则。"
         )
 
     
     def _build_prompt(self, html: str) -> str:
-        """
-        构建分析提示词 —— 提供上下文 HTML
-        """
-        return f"""
-    请分析以下小说详情页 HTML 内容，并根据结构提取出每个元信息字段的 XPath。
-    重点分析：
-    - 小说标题（title）
-    - 作者信息（author）
-    - 更新时间（update_time）
-    - 连载状态（status）
-    - 简介内容（intro）
-    - 封面图像（cover）
-    - 分类信息（category）
+            """
+            优化后的用户提示词 - 提供更清晰的分析指导
+            """
+            # 提取关键信息帮助分析
+            
+            return f"""
+    ## 网页结构分析任务
+    请仔细分析以下小说详情页的HTML结构，为每个字段生成最优的XPath提取规则。
+    下面是html内容
+        {html}
+        上面是html内容
+    ## HTML内容概览
+    - 总长度: {len(html)} 字符
+    
+    - 检测到可能包含小说信息的区域
 
-    HTML 内容如下：
-    {html}
+    ## 详细分析指导
+    请按以下步骤进行分析：
 
-    HTML 总长度：{len(html)} 字符。
-    请依据结构生成最合理的 XPath 路径，系统将根据你的回答自动构建 NovelInfoConfig 对象。
-    """
+    1. **整体结构识别**
+    - 识别页面布局容器（header、container、footer等）
+    - 定位小说信息的主要展示区域
+    - 识别章节列表的容器结构
 
+    2. **字段级分析** 
+    - 标题：查找最显著的小说名称展示位置
+    - 作者：搜索包含作者信息的文本模式
+    - 元信息：识别更新时间、状态、分类的信息组织方式
+    - 内容：定位简介文本和封面图片
 
+    3. **XPath规则生成**
+    - 为每个字段生成1-2个最稳定的XPath方案
+    - 确保规则能够应对页面的微小变化
+    - 优先使用语义化的class和id选择器
+
+    ## HTML内容
+
+请生成精确的XPath规则，确保能够可靠地提取小说信息。
+"""
+
+ 

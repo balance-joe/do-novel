@@ -11,11 +11,12 @@ class ConfigService:
         """根据 URL 获取配置文件路径（支持 .yaml/.yml）"""
         domain = urlparse(url).netloc
         for ext in (".yaml", ".yml"):
+            print(f"尝试加载配置文件: {self.config_dir}  {domain}{ext}")
             candidate = os.path.join(self.config_dir, f"{domain}{ext}")
             if os.path.exists(candidate):
                 return candidate
 
-        default_path = os.path.join(self.config_dir, "default.yaml")
+        default_path = os.path.join(self.config_dir, "www.bqg116.com.yaml")
         print(f"[⚠] 未找到 {domain} 的配置，使用默认配置 {default_path}")
         return default_path
 
