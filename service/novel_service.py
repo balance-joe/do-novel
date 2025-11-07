@@ -1,5 +1,7 @@
 # service/novel_service.py
 import asyncio
+from collections import defaultdict
+import re
 from urllib.parse import urljoin
 from parsel import Selector
 from service.config_service import ConfigService
@@ -12,44 +14,26 @@ from lxml.etree import XPathError, ParserError
 
 class NovelService:
     def __init__(self, url: str):
-        if(url) :
+        if url:
             self.url = url
             self.config = ConfigService().load_config(url)
             self.base_url = self.config.get("base_url", "")
         
+    # 抓取章节列表页
     async def fetch_chapter_list(self, url: str):
-        """抓取章节列表页"""
         async with CrawlService() as crawl:
-            # result = await crawl.async_fetch_single(url)
-            # html = result.get("html", "") if result else ""
-            chpter_path = './doc/chapter.html'
-            with open(chpter_path, 'r', encoding='utf-8') as file:
-                html = file.read()    
+            result = await crawl.async_fetch_single(url)
+            html = result.get("html", "") if result else ""
+
             if not html:
                 return {}
 
             sel = Selector(html)
-            novel_cfg = self.config["novel"]
-
-            title = sel.xpath(novel_cfg["title"]).get(default="").strip()
-            print(novel_cfg["title"])
-            
-            author_raw = sel.xpath(novel_cfg["author"]).get(default="")
-            author_split = novel_cfg.get("author_split", "：")
-            author = author_raw.split(author_split)[-1].strip() if author_raw else ""
-
-            intro = sel.xpath(novel_cfg["intro"]).get(default="").strip()
-            update_raw = sel.xpath(novel_cfg["update_time"]).get(default="")
-            update_split = novel_cfg.get("update_split", "：")
-            update_time = update_raw.split(update_split)[-1].strip()
 
             # 获取章节列表
             chapters_cfg = self.config["chapters"]
             all_chapters = []
             containers = sel.xpath(chapters_cfg["container"])
-            if not containers:
-                # fallback 自动容错
-                containers = sel.xpath("//div[contains(@class, 'chapter') or contains(@id, 'chapter') or contains(@class, 'section')]")
             
             for container in containers:
                 items = container.xpath(chapters_cfg["item"])
@@ -63,7 +47,6 @@ class NovelService:
                     if not href:
                         continue
 
-                    # ✅ 使用 urljoin，防止路径拼接错误
                     full_url = urljoin(self.base_url, href)
 
                     all_chapters.append({
@@ -81,18 +64,41 @@ class NovelService:
                     seen_urls.add(ch["url"])
             all_chapters = unique_chapters
             
-            #获取章节结束
-            
+            return all_chapters
+
+
+    # 抓取小说信息页
+    async def fetch_novel_info(self, url: str):
+        async with CrawlService() as crawl:
+            result = await crawl.async_fetch_single(url)
+            html = result.get("html", "") if result else ""
+
+            if not html:
+                return {}
+
+            sel = Selector(html)
+            novel_cfg = self.config["novel"]
+
+            title = sel.xpath(novel_cfg["title"]).get(default="").strip()
+            author_raw = sel.xpath(novel_cfg["author"]).get(default="")
+            author_split = novel_cfg.get("author_split", "：")
+            author = author_raw.split(author_split)[-1].strip() if author_raw else ""
+
+            intro = sel.xpath(novel_cfg["intro"]).get(default="").strip()
+            update_raw = sel.xpath(novel_cfg["update_time"]).get(default="")
+            update_split = novel_cfg.get("update_split", "：")
+            update_time = update_raw.split(update_split)[-1].strip()
+
             return {
                 "title": title,
                 "author": author,
                 "intro": intro,
                 "update_time": update_time,
-                "all_chapters": all_chapters,
             }
 
+
+    # 抓取单章正文页（含分页）
     async def fetch_chapter_content(self, url: str):
-        """抓取单章正文页（含分页）"""
         async with CrawlService() as crawl:
             content_cfg = self.config["content"]
             filters = self.config.get("filters", {})
@@ -134,13 +140,33 @@ class NovelService:
                 "title": title,
                 "content": "\n".join(chapter_content)
             }
-            
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+    # 异步下载整本小说（多章节合并）
+    # 直接调用 fetch_chapter_content()
     async def download_novel(self, novel_name: str, author: str, chapters: list[dict]):
-        """
-        异步下载整本小说（多章节合并）
-        直接调用 fetch_chapter_content()
-        """
+        
         os.makedirs("./output", exist_ok=True)
         file_path = f"./output/{novel_name}_{author}.txt"
 
@@ -167,51 +193,56 @@ class NovelService:
 
         print(f"✅ 小说《{novel_name}》下载完成：{file_path}")
         return file_path
-    
-    
-    def extract_by_xpath(self, xpath_rule: str, html_content: str):
+
+
+
+    def compress_html(self, html_content):
         """
-        从 HTML 中提取符合 XPath 规则的内容
-        
-        参数:
-            xpath_rule: XPath 提取规则（字符串）
-            html_content: 待解析的 HTML 字符串
-        
-        返回:
-            list: 提取到的内容列表（元素可能是文本、属性值或节点对象，根据 XPath 规则而定）
-                若解析失败或无结果，返回空列表
+        使用正则表达式压缩HTML，移除重复的链接
         """
-        if not isinstance(xpath_rule, str) or not xpath_rule.strip():
-            print("错误：XPath 规则不能为空字符串")
-            return []
+        # 匹配所有容器
+        container_pattern = r'(<div[^>]*>.*?</div>|<ul[^>]*>.*?</ul>|<ol[^>]*>.*?</ol>|<nav[^>]*>.*?</nav>|<section[^>]*>.*?</section>|<article[^>]*>.*?</article>)'
         
-        if not isinstance(html_content, str) or not html_content.strip():
-            print("错误：HTML 内容不能为空字符串")
-            return []
+        def remove_duplicate_links(match):
+            container_html = match.group(0)
+            
+            # 匹配容器内的所有链接
+            link_pattern = r'(<a\s+[^>]*href=([\'"])(.*?)\2[^>]*>.*?</a>)'
+            links = re.findall(link_pattern, container_html, re.DOTALL)
+            
+            # 记录每个href出现的次数和第一个出现的位置
+            href_count = defaultdict(int)
+            href_first_occurrence = {}
+            
+            for i, (full_match, quote, href) in enumerate(links):
+                href_count[href] += 1
+                if href not in href_first_occurrence:
+                    href_first_occurrence[href] = (full_match, i)
+            
+            # 构建新的容器内容
+            new_container = container_html
+            
+            # 从后往前处理，避免索引变化问题
+            for href, count in sorted(href_count.items(), key=lambda x: -x[1]):
+                if count > 1:
+                    # 找到所有重复链接的位置
+                    all_occurrences = [m.start() for m in re.finditer(re.escape(href_first_occurrence[href][0]), new_container)]
+                    
+                    # 保留第一个，移除其他
+                    for i, pos in enumerate(all_occurrences):
+                        if i > 0:  # 跳过第一个
+                            # 找到链接的完整匹配
+                            link_match = re.search(r'<a\s+[^>]*>.*?</a>', new_container[pos:], re.DOTALL)
+                            if link_match:
+                                link_text_match = re.search(r'>([^<]*)</a>', link_match.group(0))
+                                if link_text_match:
+                                    # 保留链接文本，但移除链接
+                                    link_text = link_text_match.group(1)
+                                    new_container = new_container[:pos] + link_text + new_container[pos+len(link_match.group(0)):]
+            
+            return new_container
         
-        try:
-            # 解析 HTML 内容为可 XPath 查询的对象
-            tree = html.fromstring(html_content)
-        except ParserError as e:
-            print(f"HTML 解析失败：{str(e)}")
-            return []
+        # 对每个容器应用去重
+        compressed_html = re.sub(container_pattern, remove_duplicate_links, html_content, flags=re.DOTALL)
         
-        try:
-            # 执行 XPath 查询
-            results = tree.xpath(xpath_rule)
-            # 对结果进行简单格式化（可选，根据需求调整）
-            formatted_results = []
-            for item in results:
-                # 若结果是元素节点，提取其文本（可根据需求修改，比如保留节点对象）
-                if hasattr(item, 'text'):
-                    formatted_results.append(item.text.strip() if item.text else '')
-                else:
-                    # 非元素节点（如属性值、文本节点等）直接保留
-                    formatted_results.append(str(item).strip())
-            return formatted_results
-        except XPathError as e:
-            print(f"XPath 语法错误：{str(e)}")
-            return []
-        except Exception as e:
-            print(f"提取过程出错：{str(e)}")
-            return []
+        return compressed_html

@@ -9,20 +9,20 @@ if sys.platform.startswith("win"):
 
 async def main():
     # 测试章节列表
-    url = "https://www.53122c.cfd/book/55146/"
+    url = "https://www.bqg166.com/html/4299/"
     novel_service = NovelService(url)
     info = await novel_service.fetch_chapter_list(url)
-    # print(info)
+    print(info)
 
-    # 测试正文抓取
-    url = "https://www.53122c.cfd/book/55146/2.html"
-    novel_service = NovelService(url)
-    content = await novel_service.fetch_chapter_content(url)
-    print(content)
+    # # 测试正文抓取
+    # url = "https://www.53122c.cfd/book/55146/2.html"
+    # novel_service = NovelService(url)
+    # content = await novel_service.fetch_chapter_content(url)
+    # print(content)
 
-    chapters = info['all_chapters']  # 仅测试前5章
+    # chapters = info['all_chapters']  # 仅测试前5章
     # print(f"准备下载小说《{info['title']}》的 {len(chapters)} 章")
-    await novel_service.download_novel("蛊真人", "", chapters)
+    # await novel_service.download_novel("蛊真人", "", chapters)
 
 if __name__ == "__main__":
     asyncio.run(main())
