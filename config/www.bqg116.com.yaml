@@ -40,11 +40,6 @@ chapters:
   url: "./a/@href"
   more_url: "//a[contains(@class, 'index-container-btn') and not(contains(@class, 'disabled-btn'))]/@href"
   pagination: true
-  # container: "//div[contains(@class,'section-box') or contains(@class,'chapter-list') or contains(@id,'section')]"
-  # item: ".//li//a | .//dd//a | .//p//a"
-  # title: "normalize-space(string(.))"  
-  # url: "@href"
-  # pagination: true
 
 # ===============================
 # 章节正文（章节详情页）

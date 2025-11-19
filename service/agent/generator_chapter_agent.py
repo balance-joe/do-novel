@@ -39,6 +39,7 @@ class XPathGeneratorChapterAgent:
         result = self.agent.run_sync(prompt)
         
         # 返回解析结果
+        return result.output.model_dump_json(indent=4)
         return result.output
 
 

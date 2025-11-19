@@ -39,7 +39,7 @@ class XPathGeneratorNovelAgent:
         result = self.agent.run_sync(prompt)
         
         # 返回解析结果
-        return result.output
+        return result.output.model_dump_json(indent=4)
 
 
     def _get_system_prompt(self) -> str:
@@ -68,13 +68,23 @@ class XPathGeneratorNovelAgent:
             "- **精确提取**: 文本节点使用text()，属性使用@attr，根据需求选择\n\n"
             
             "## 输出要求\n"
-            "直接返回有效的XPath表达式字符串，确保：\n"
-            "- 可被lxml库直接使用\n"
-            "- 能够准确匹配目标内容\n"
-            "- 具备一定的通用性和容错性\n"
-            "- 若无对应内容则返回None\n\n"
+            "- 你必须以 **JSON 格式** 返回结果，JSON 结构必须严格符合 Pydantic 模型 NovelInfoConfig 的要求。\n"
+            "- JSON 中的所有值都是 XPath 表达式字符串。若无对应内容则使用 null。\n"
+            "- 请基于HTML的实际结构生成最合理的XPath规则，并将结果封装在一个JSON对象中。\n\n"
             
-            "请基于HTML的实际结构生成最合理的XPath规则。"
+            f"""JSON 示例 (请填充 XPath 表达式):
+            {{
+              "title": "",
+              "author": "",
+              "update_time": "",
+              "status": "",
+              "intro": "",
+              "cover": "",
+              "category": "",
+              "author_split": "：",
+              "update_split": "："
+            }}
+            """
         )
 
     

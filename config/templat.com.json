@@ -1,0 +1,52 @@
+{
+  "site": {
+    "name": "站点名称",
+    "base_url": "网站基础地址",
+    "encoding": "网页编码 (如: utf-8)",
+    "user_agent": "自定义 UA（可选）",
+    "delay": 1.5,
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "zh-CN,zh;q=0.9,en-US;q;0.8,en;q=0.7",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Connection": "keep-alive",
+      "Upgrade-Insecure-Requests": "1",
+      "Cookie": "自定义 Cookie 字符串（如果需要）"
+    }
+  },
+  "novel": {
+    "title": "小说标题的 XPath 规则",
+    "author": "作者信息的 XPath 规则（需配合 author_split）",
+    "update_time": "最近更新时间的 XPath 规则",
+    "intro": "小说简介的 XPath 规则",
+    "author_split": "作者字段的分隔符（如：冒号 '：'）",
+    "update_split": "更新时间字段的分隔符（如：冒号 '：'）",
+    "cover": "小说封面图的 XPath 规则",
+    "category": "小说类别的 XPath 规则",
+    "status": "连载状态的 XPath 规则（连载中/已完结等）"
+  },
+  "chapters": {
+    "container": "章节目录列表的容器 XPath",
+    "item": "单个章节节点的选择器（相对于容器）",
+    "title": "章节标题的 XPath 规则（相对于 item）",
+    "url": "章节链接的 XPath 规则（相对于 item）",
+    "more_url": "目录分页链接或“更多章节”按钮的 XPath 规则",
+    "pagination": true
+  },
+  "content": {
+    "container": "章节正文容器的 XPath 规则",
+    "title": "章节标题的 XPath 规则",
+    "text": "章节正文段落的 XPath 规则",
+    "next_page": "下一页（分页章节）链接的 XPath 规则",
+    "pagination": true
+  },
+  "filters": {
+    "remove_html": [
+      "要删除的 HTML 节点 XPath 列表（如广告）"
+    ],
+    "regex": [
+      "要过滤的文本正则表达式列表（如无关提示）"
+    ]
+  }
+}

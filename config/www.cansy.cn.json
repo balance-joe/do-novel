@@ -1,0 +1,52 @@
+{
+    "site": {
+        "name": "测试站点",
+        "base_url": "https://www.cansy.cn/",
+        "encoding": "utf-8",
+        "user_agent": "Custom UA String",
+        "delay": 1.0,
+        "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q;0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Cookie": "自定义 Cookie 字符串（如果需要）"
+        }
+    },
+    "novel": {
+        "title": "//div[@class='info']/h1/text()",
+        "author": "//div[@class='small']/span[contains(text(), '作者')]/text()",
+        "update_time": "//div[@class='small']/span[contains(text(), '更新')]/text()",
+        "status": "",
+        "intro": "//div[@class='intro']/dl/dd/text()",
+        "cover": "//div[@class='cover']/img/@src",
+        "category": "//div[@class='path']/a[2]/text()",
+        "author_split": "：",
+        "update_split": "："
+    },
+    "chapters": {
+        "container": "//div[@class='listmain']/dl",
+        "item": ".//dd",
+        "title": "./a/text()",
+        "url": "./a/@href",
+        "pagination": false,
+        "more_url": null
+    },
+    "content": {
+        "container": "//div[@id='chaptercontent']",
+        "title": "//div[@class='content']/h1/text()",
+        "text": "//div[@id='chaptercontent']//div[@id='bodybox']/p/text()",
+        "next_page": "//a[@id='next_page']",
+        "pagination": false
+    },
+    "filters": {
+        "remove_html": [
+            "要删除的 HTML 节点 XPath 列表（如广告）"
+        ],
+        "regex": [
+            "要过滤的文本正则表达式列表（如无关提示）"
+        ]
+    }
+}

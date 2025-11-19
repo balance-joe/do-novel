@@ -8,17 +8,24 @@ if sys.platform.startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 async def main():
+
     # 测试章节列表
-    url = "https://www.bqg166.com/html/4299/"
+    url = "https://www.cansy.cn/139095/"
     novel_service = NovelService(url)
-    info = await novel_service.fetch_chapter_list(url)
+    info = await novel_service.fetch_novel_info(url)
     print(info)
 
-    # # 测试正文抓取
-    # url = "https://www.53122c.cfd/book/55146/2.html"
+    # # 测试章节列表
+    # url = "https://www.cansy.cn/139095/"
     # novel_service = NovelService(url)
-    # content = await novel_service.fetch_chapter_content(url)
-    # print(content)
+    # info = await novel_service.fetch_chapter_list(url)
+    # print(info)
+
+    # # 测试正文抓取
+    url = "https://www.cansy.cn/139095/51410069.html"
+    novel_service = NovelService(url)
+    content = await novel_service.fetch_chapter_content(url)
+    print(content)
 
     # chapters = info['all_chapters']  # 仅测试前5章
     # print(f"准备下载小说《{info['title']}》的 {len(chapters)} 章")
